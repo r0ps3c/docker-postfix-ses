@@ -2,7 +2,7 @@
 set -e
 MONITOR_INTERVAL=10 # seconds
 
-/opt/postfix/scripts/write-config.sh $@
+/opt/postfix/scripts/update-config.sh $@
 /usr/libexec/postfix/master -w
 
 # consider clean shutdown by trapping signals?
