@@ -55,7 +55,7 @@ done
 
 echo "Updating config via postconf"
 config_directory=`postconf -h config_directory`
-cafile=`apk --no-network --no-cache --quiet info -L ca-certificates-bundle|grep ca-certificates.crt`
+cafile=`apk --quiet info -L ca-certificates-bundle|grep ca-certificates.crt`
 
 postconf -e "relayhost=${RELAYHOST}" \
 "mynetworks=127.0.0.0/8 ${RELAYNETWORKS}" \
