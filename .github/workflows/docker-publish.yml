@@ -5,7 +5,7 @@ on:
     - cron: '38 23 * * *'
   push:
     tags:
-    - "v*
+    - "v*"
   workflow_dispatch:
 
 env:
