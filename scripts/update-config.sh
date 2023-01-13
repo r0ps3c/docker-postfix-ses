@@ -2,7 +2,7 @@
 set -e
 
 function usage() {
-	echo "$0 -r <RELAYHOST> -n <RELAYNETWORKS> -d <MYDOMAIN> -s <SRCIP> -u <SMTPUSER> -p <SMTPPASSWD> -r <ROOTMAIL>"
+	echo "$0 -r <RELAYHOST> -n <RELAYNETWORKS> -d <MYDOMAIN> -s <SRCIP> -u <SMTPUSER> -p <SMTPPASSWD> -m <ROOTMAIL>"
 }
 
 while getopts "r:n:d:s:u:p:m:" opt; do
@@ -63,7 +63,7 @@ postconf -e "relayhost=${RELAYHOST}" \
 "smtp_bind_address=${SRCIP}" \
 "smtp_sasl_auth_enable = yes" \
 "smtp_sasl_security_options = noanonymous" \
-"smtp_sasl_password_maps = hash:${config_directory}/sasl_passwd" \
+"smtp_sasl_password_maps = lmdb:${config_directory}/sasl_passwd" \
 "smtp_use_tls = yes" \
 "smtp_tls_security_level = encrypt" \
 "smtp_tls_note_starttls_offer = yes" \
@@ -71,6 +71,6 @@ postconf -e "relayhost=${RELAYHOST}" \
 
 echo "Writing ${config_directory}/sasl_passwd"
 printf "%s %s:%s\n" ${RELAYHOST} ${SMTPUSER} ${SMTPPASSWD} > ${config_directory}/sasl_passwd
-postmap hash:${config_directory}/sasl_passwd
+postmap lmdb:${config_directory}/sasl_passwd
 sed -r -i "s/^[#]root:.*/root: ${ROOTMAIL}/" ${config_directory}/aliases
 newaliases
