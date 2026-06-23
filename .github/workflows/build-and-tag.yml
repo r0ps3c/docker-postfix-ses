@@ -1,0 +1,24 @@
+name: Build and Tag
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly Monday 03:00 UTC
+  push:
+    branches:
+      - master
+      - stable
+  pull_request:
+    branches:
+      - master
+      - stable
+  workflow_dispatch:
+
+jobs:
+  build-scan-push:
+    uses: r0ps3c/gh-shared-workflows/.github/workflows/docker-build-scan-push.yml@a9bba302b3b33a6560dd88174cd16ea42cc41385 # main
+    with:
+      image-ref: postfix-ses:main
+      primary_branch: master
+      version-extract-command: "apk info postfix 2>/dev/null | grep '^postfix-' | head -1 | cut -d- -f2 | cut -dr -f1"
+      test-command: make test
+    secrets: inherit

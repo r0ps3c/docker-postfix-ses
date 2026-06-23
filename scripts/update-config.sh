@@ -1,76 +1,40 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-function usage() {
-	echo "$0 -r <RELAYHOST> -n <RELAYNETWORKS> -d <MYDOMAIN> -s <SRCIP> -u <SMTPUSER> -p <SMTPPASSWD> -m <ROOTMAIL>"
-}
-
-while getopts "r:n:d:s:u:p:m:" opt; do
-        case $opt in
-        r)
-                RELAYHOST="${OPTARG}"
-                ;;
-        n)
-                RELAYNETWORKS="${OPTARG}"
-                ;;
-        d)
-                MYDOMAIN="${OPTARG}"
-                ;;
-        s)
-                SRCIP="${OPTARG}"
-                ;;
-        u)
-                SMTPUSER="${OPTARG}"
-                ;;
-        p)
-                SMTPPASSWD="${OPTARG}"
-                ;;
-        m)
-                ROOTMAIL="${OPTARG}"
-                ;;
-
-	\?)
-                echo "Invalid option $OPTARG" >&2
-		usage
-                exit 1
-                ;;
-        :)
-                echo "Option $OPTARG requires an argument." >&2
-		usage
-                exit 1
-                ;;
-        esac
-done
-
-
-for i in RELAYHOST RELAYNETWORKS MYDOMAIN SRCIP SMTPUSER SMTPPASSWD ROOTMAIL;
-do
-	if [ -z "${!i}" ]
-	then
-		echo "missing $i"
-		usage
+for var in RELAYHOST RELAY_NETWORKS MY_DOMAIN SMTP_USER SMTP_PASSWD ROOT_MAIL; do
+	eval "val=\$$var"
+	if [ -z "$val" ]; then
+		echo "ERROR: Required environment variable $var is not set" >&2
 		exit 1
 	fi
 done
 
-echo "Updating config via postconf"
-config_directory=`postconf -h config_directory`
-cafile=`apk --quiet info -L ca-certificates-bundle|grep ca-certificates.crt`
+config_dir=$(postconf -h config_directory)
 
-postconf -e "relayhost=${RELAYHOST}" \
-"mynetworks=127.0.0.0/8 ${RELAYNETWORKS}" \
-"mydomain=${MYDOMAIN}" \
-"smtp_bind_address=${SRCIP}" \
-"smtp_sasl_auth_enable = yes" \
-"smtp_sasl_security_options = noanonymous" \
-"smtp_sasl_password_maps = lmdb:${config_directory}/sasl_passwd" \
-"smtp_use_tls = yes" \
-"smtp_tls_security_level = encrypt" \
-"smtp_tls_note_starttls_offer = yes" \
-"smtp_tls_CAfile = /${cafile}"
+postconf -e \
+	"relayhost=${RELAYHOST}" \
+	"mynetworks=127.0.0.0/8 ${RELAY_NETWORKS}" \
+	"mydomain=${MY_DOMAIN}" \
+	"smtp_sasl_auth_enable=yes" \
+	"smtp_sasl_security_options=noanonymous" \
+	"smtp_sasl_password_maps=lmdb:${config_dir}/sasl_passwd" \
+	"smtp_use_tls=yes" \
+	"smtp_tls_security_level=encrypt" \
+	"smtp_tls_note_starttls_offer=yes" \
+	"smtp_tls_CAfile=/etc/ssl/certs/ca-certificates.crt"
 
-echo "Writing ${config_directory}/sasl_passwd"
-printf "%s %s:%s\n" ${RELAYHOST} ${SMTPUSER} ${SMTPPASSWD} > ${config_directory}/sasl_passwd
-postmap lmdb:${config_directory}/sasl_passwd
-sed -r -i "s/^[#]root:.*/root: ${ROOTMAIL}/" ${config_directory}/aliases
+TLS_DIR=/etc/postfix/tls
+if [ -f "${TLS_DIR}/tls.crt" ] && [ -f "${TLS_DIR}/tls.key" ]; then
+	postconf -e \
+		"smtpd_tls_cert_file=${TLS_DIR}/tls.crt" \
+		"smtpd_tls_key_file=${TLS_DIR}/tls.key" \
+		"smtpd_tls_security_level=may" \
+		"smtpd_tls_loglevel=1"
+fi
+
+printf "%s %s:%s\n" "${RELAYHOST}" "${SMTP_USER}" "${SMTP_PASSWD}" > "${config_dir}/sasl_passwd"
+postmap lmdb:"${config_dir}/sasl_passwd"
+chmod 600 "${config_dir}/sasl_passwd" "${config_dir}/sasl_passwd.lmdb"
+
+printf "root: %s\n" "${ROOT_MAIL}" > "${config_dir}/aliases"
 newaliases
