@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.24
 
 RUN apk add --update postfix ca-certificates libsasl cyrus-sasl-login openssl && \
 	rm -rf /var/cache/apk/*
