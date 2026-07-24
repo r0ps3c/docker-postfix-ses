@@ -18,7 +18,7 @@ jobs:
     uses: r0ps3c/gh-shared-workflows/.github/workflows/docker-build-scan-push.yml@3c584aeb1a5d0b1a476db269b1d04cf3fe7fe9ab # main
     with:
       image-ref: postfix-ses:main
-      primary_branch: master
+      primary_branch: main
       version-extract-command: "apk info postfix 2>/dev/null | grep '^postfix-' | head -1 | cut -d- -f2 | cut -dr -f1"
       test-command: make test
     secrets: inherit
