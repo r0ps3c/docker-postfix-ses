@@ -15,7 +15,7 @@ on:
 
 jobs:
   build-scan-push:
-    uses: r0ps3c/gh-shared-workflows/.github/workflows/docker-build-scan-push.yml@d8810a975e743dfa300e0466160b85235058fcc0 # main
+    uses: r0ps3c/gh-shared-workflows/.github/workflows/docker-build-scan-push.yml@6bb411b5e3925e523569057fe6e56722b8097605 # main
     with:
       image-ref: postfix-ses:main
       primary_branch: main
