@@ -1,6 +1,7 @@
 FROM alpine:3.24
 
 RUN apk add --update postfix ca-certificates libsasl cyrus-sasl-login openssl && \
+	apk upgrade --no-cache && \
 	rm -rf /var/cache/apk/*
 
 COPY scripts /opt/postfix/scripts
